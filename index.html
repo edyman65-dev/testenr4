@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduGalp</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:linear-gradient(135deg,#FFF4EC 0%,#FFE8D2 50%,#FFDCC0 100%)}
+#cv{position:fixed;inset:0;z-index:0}
+
+/* Very subtle warm grain — helps depth on bright bg */
+#grain{
+  position:fixed;inset:0;z-index:2;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity:0.018;mix-blend-mode:multiply;
+}
+
+/* Vignette — very soft, warm toned */
+#vignette{
+  position:fixed;inset:0;z-index:3;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(200,120,60,0.08) 100%);
+}
+
+#ui{position:fixed;inset:0;z-index:30;pointer-events:none;font-family:'DM Sans',sans-serif}
+#fade{position:fixed;inset:0;z-index:20;pointer-events:none;background:#FFF4EC;opacity:0;transition:opacity .7s ease}
+
+/* TOP BAR */
+#topbar{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:26px 48px;
+  background:linear-gradient(180deg,rgba(255,244,236,0.85) 0%,transparent 100%);
+}
+#galp-logo{display:flex;align-items:center;gap:10px}
+#galp-logo svg{width:28px;height:28px;filter:drop-shadow(0 2px 6px rgba(255,107,0,0.25))}
+#galp-wordmark{
+  font-family:'Bebas Neue',sans-serif;font-size:20px;
+  letter-spacing:5px;color:rgba(30,20,10,0.82);
+}
+#nav-label{
+  font-size:9px;letter-spacing:3.5px;text-transform:uppercase;
+  color:rgba(80,50,20,0.35);font-weight:300;transition:opacity .4s;
+}
+
+/* PANEL - bottom left */
+#panel{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:0 48px 76px;
+  background:linear-gradient(0deg,rgba(255,244,236,0.96) 0%,rgba(255,244,236,0.82) 50%,transparent 100%);
+  transition:opacity .5s ease;
+}
+#panel.hidden{opacity:0;pointer-events:none}
+#eyebrow{
+  font-size:9px;letter-spacing:4px;text-transform:uppercase;
+  color:#FF6B00;font-weight:500;margin-bottom:10px;
+  opacity:0;transition:opacity .5s ease .1s;
+}
+#eyebrow.in{opacity:0.85}
+#title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(38px,5vw,68px);
+  color:#1a0e06;line-height:.9;letter-spacing:.5px;
+  margin-bottom:14px;max-width:660px;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .55s ease .15s,transform .55s ease .15s;
+}
+#title.in{opacity:1;transform:translateY(0)}
+#subtitle{
+  font-size:13px;line-height:1.8;color:rgba(40,20,5,0.48);
+  font-weight:300;max-width:480px;margin-bottom:24px;
+  opacity:0;transition:opacity .55s ease .25s;
+  min-height:24px;
+}
+#subtitle.in{opacity:1}
+
+/* DATA ELEMENTS */
+.data-block{
+  opacity:0;transform:translateY(10px);
+  transition:opacity .5s ease,transform .5s ease;
+  margin-bottom:24px;
+}
+.data-block.in{opacity:1;transform:translateY(0)}
+
+/* stat pills */
+.stat-row{display:flex;gap:3px}
+.stat-pill{
+  padding:12px 18px;
+  background:rgba(255,255,255,0.72);
+  border:1px solid rgba(255,107,0,0.15);
+  border-top:2px solid rgba(255,107,0,0.45);
+  backdrop-filter:blur(12px);
+  min-width:100px;transition:border-color .3s,background .3s,box-shadow .3s;
+}
+.stat-pill:hover{background:rgba(255,255,255,0.95);border-top-color:#FF6B00;box-shadow:0 4px 20px rgba(255,107,0,0.12)}
+.sn{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#FF6B00;line-height:1}
+.sl{font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(40,20,5,0.4);margin-top:3px}
+
+/* theme list */
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;max-width:480px}
+.theme-item{
+  padding:12px 16px;background:rgba(255,255,255,0.6);
+  border-left:2px solid rgba(255,107,0,0.3);
+  transition:background .3s,border-color .3s,box-shadow .3s;
+}
+.theme-item:hover{background:rgba(255,255,255,0.95);border-left-color:#FF6B00;box-shadow:0 2px 12px rgba(255,107,0,0.1)}
+.ti-n{font-size:8px;letter-spacing:3px;color:#FF6B00;opacity:.7;margin-bottom:3px}
+.ti-t{font-size:11px;font-weight:500;color:rgba(30,15,5,0.78)}
+
+/* phase list */
+.phase-list{display:flex;flex-direction:column;gap:2px;max-width:460px}
+.phase-item{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 14px;background:rgba(255,255,255,0.55);
+  border-left:2px solid rgba(255,107,0,0.22);
+  transition:all .3s;
+}
+.phase-item:hover{background:rgba(255,255,255,0.95);border-left-color:#FF6B00;padding-left:18px;box-shadow:0 2px 12px rgba(255,107,0,0.1)}
+.pi-n{font-size:8px;letter-spacing:2px;color:rgba(255,107,0,0.7);width:20px;flex-shrink:0}
+.pi-t{font-size:11px;color:rgba(30,15,5,0.72);font-weight:400}
+
+/* result list */
+.result-list{display:flex;flex-direction:column;gap:2px;max-width:460px}
+.result-item{
+  padding:12px 16px;background:rgba(255,255,255,0.55);
+  border-left:2px solid rgba(255,107,0,0.2);transition:all .3s;
+}
+.result-item:hover{background:rgba(255,255,255,0.95);border-left-color:#FF6B00;box-shadow:0 2px 12px rgba(255,107,0,0.1)}
+.ri-t{font-size:11px;font-weight:600;color:rgba(30,15,5,0.82);margin-bottom:3px}
+.ri-d{font-size:10px;color:rgba(30,15,5,0.4);line-height:1.6}
+
+/* budget */
+.budget-wrap{max-width:400px}
+.b-total{font-family:'Bebas Neue',sans-serif;font-size:50px;color:#1a0e06;letter-spacing:1px;margin-bottom:2px}
+.b-sub{font-size:9px;letter-spacing:2.5px;color:rgba(255,107,0,0.6);text-transform:uppercase;margin-bottom:18px}
+.b-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.b-name{font-size:10px;color:rgba(30,15,5,0.45);width:110px;flex-shrink:0}
+.b-track{flex:1;height:1.5px;background:rgba(200,140,80,0.18);overflow:hidden}
+.b-fill{height:100%;background:linear-gradient(90deg,#FF5500,#FF9500);width:0;transition:width 1.5s cubic-bezier(.4,0,.2,1)}
+.b-val{font-size:10px;color:#FF6B00;width:36px;text-align:right;flex-shrink:0;font-weight:600}
+
+/* CTA */
+.cta{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 22px;
+  background:rgba(255,107,0,0.09);
+  border:1px solid rgba(255,107,0,0.35);
+  color:rgba(180,80,0,0.85);
+  font-size:9px;letter-spacing:2.5px;text-transform:uppercase;
+  cursor:pointer;pointer-events:all;transition:all .3s;
+  font-family:'DM Sans',sans-serif;
+}
+.cta:hover{background:#FF6B00;border-color:#FF6B00;color:#fff;box-shadow:0 4px 20px rgba(255,107,0,0.28)}
+.cta-a{opacity:.4;transition:all .3s}.cta:hover .cta-a{opacity:1;transform:translateX(3px)}
+
+/* BOTTOM NAV */
+#bnav{position:absolute;bottom:26px;right:48px;display:flex;align-items:center;gap:8px}
+.ndot{width:5px;height:5px;border-radius:50%;background:rgba(180,100,40,0.2);cursor:pointer;pointer-events:all;transition:all .35s}
+.ndot.on{background:#FF6B00;box-shadow:0 0 6px rgba(255,107,0,0.4)}
+.narr{width:28px;height:28px;border-radius:50%;border:1px solid rgba(180,100,40,0.2);background:rgba(255,255,255,0.5);color:rgba(150,80,20,0.5);cursor:pointer;font-size:10px;transition:all .25s;display:flex;align-items:center;justify-content:center;pointer-events:all}
+.narr:hover{border-color:rgba(255,107,0,0.5);color:#FF6B00;background:rgba(255,255,255,0.9)}
+.narr:disabled{opacity:.15;pointer-events:none}
+
+/* PROGRESS */
+#prog{position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(200,130,60,0.15)}
+#pfill{height:100%;background:#FF6B00;transition:width .6s ease;opacity:0.7}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="grain"></div>
+<div id="vignette"></div>
+<div id="fade"></div>
+
+<div id="ui">
+  <div id="topbar">
+    <div id="galp-logo">
+      <svg viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="48" fill="#FF6B00"/>
+        <path d="M68 50H52v10h8.5C58 65.5 54.4 68 50 68c-9.9 0-18-8.1-18-18s8.1-18 18-18c4.6 0 8.8 1.8 11.9 4.7l7.1-7.1C64.6 25.4 57.7 22 50 22c-15.5 0-28 12.5-28 28s12.5 28 28 28c15.5 0 28-12.5 28-28z" fill="white"/>
+      </svg>
+      <span id="galp-wordmark">galp</span>
+    </div>
+    <div id="nav-label">EduGalp · Moçambique · 2025</div>
+  </div>
+
+  <div id="panel">
+    <div id="eyebrow"></div>
+    <div id="title"></div>
+    <div id="subtitle"></div>
+    <div id="content-slot"></div>
+    <button class="cta" id="cta-btn"><span id="cta-txt">Começar</span> <span class="cta-a">→</span></button>
+  </div>
+
+  <div id="bnav">
+    <button class="narr" id="pb" onclick="go(-1)" disabled>←</button>
+    <div id="dw"></div>
+    <button class="narr" id="nb" onclick="go(1)">→</button>
+  </div>
+  <div id="prog"><div id="pfill"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────
+// RENDERER
+// ─────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById('cv'), antialias: true
+});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0xFFECDA, 1);  // warm off-white — matches CSS bg
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.88;  // slightly reduced — bright env
+renderer.physicallyCorrectLights = true;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xFFECDA, 22, 80);  // warm fog, low density
+const camera = new THREE.PerspectiveCamera(44, innerWidth / innerHeight, 0.05, 200);
+
+// Camera spring
+const cam = {
+  pos: new THREE.Vector3(0, 1, 14),
+  look: new THREE.Vector3(0, 0, 0),
+  fov: 44,
+  dp: new THREE.Vector3(0, 1, 14),
+  dl: new THREE.Vector3(0, 0, 0),
+  df: 44
+};
+camera.position.copy(cam.pos);
+
+// ─────────────────────────────────────────────────────
+// CINEMATIC LIGHTING — bright warm daylight, orange accent
+// ─────────────────────────────────────────────────────
+// Hemisphere — warm sky above, warm ground below
+const hemi = new THREE.HemisphereLight(0xFFE8CC, 0xFFD4AA, 1.8);
+scene.add(hemi);
+
+// Key — bright warm directional (clean daylight)
+const key = new THREE.DirectionalLight(0xFFF5E8, 2.0);
+key.position.set(8, 14, 6);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -20; key.shadow.camera.right = 20;
+key.shadow.camera.top = 20; key.shadow.camera.bottom = -20;
+key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+key.shadow.radius = 3;  // soft shadows
+scene.add(key);
+
+// Orange rim — subtle, energy accent only
+const rim = new THREE.PointLight(0xFF7722, 1.8, 40);
+rim.position.set(-10, 3, -8); scene.add(rim);
+
+// Secondary warm fill — very soft
+const fill = new THREE.PointLight(0xFFCC88, 1.2, 35);
+fill.position.set(6, -2, 8); scene.add(fill);
+
+// Ground bounce — warm cream
+const bounce = new THREE.PointLight(0xFFEED8, 0.6, 20);
+bounce.position.set(0, -4, 2); scene.add(bounce);
+
+// ─────────────────────────────────────────────────────
+// GROUND — warm light floor
+// ─────────────────────────────────────────────────────
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(120, 120),
+  new THREE.MeshStandardMaterial({
+    color: 0xFFE4C8, roughness: 0.92, metalness: 0.02
+  })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -5.5;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Subtle warm grid
+const grid = new THREE.GridHelper(80, 50, 0xFF9944, 0xFFD4AA);
+grid.position.y = -5.48;
+grid.material.opacity = 0.12; grid.material.transparent = true;
+scene.add(grid);
+
+// ─────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────
+const lerp = (a, b, t) => a + (b - a) * t;
+const lv = (v, d, t) => { v.x = lerp(v.x, d.x, t); v.y = lerp(v.y, d.y, t); v.z = lerp(v.z, d.z, t); };
+const rnd = (a, b) => a + (b - a) * Math.random();
+function pbr(col, rough, metal, emit = null, emitI = 0) {
+  const m = new THREE.MeshStandardMaterial({ color: col, roughness: rough, metalness: metal });
+  if (emit) { m.emissive = new THREE.Color(emit); m.emissiveIntensity = emitI; }
+  return m;
+}
+const mk = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; return m; };
+
+// ─────────────────────────────────────────────────────
+// EARTH GLOBE — premium, energy-lit
+// ─────────────────────────────────────────────────────
+const globeG = new THREE.Group();
+scene.add(globeG);
+globeG.position.set(3.8, 0, 0);
+
+// Deep ocean — richer blue, still readable in bright env
+const ocean = mk(
+  new THREE.SphereGeometry(3, 72, 72),
+  pbr(0x1a4a6a, 0.12, 0.2)
+);
+globeG.add(ocean);
+
+// Land — procedural patches with warm-lit PBR material
+function landPatch(lat, lon, sz, col = 0x1e4a1e) {
+  const phi = (90 - lat) * Math.PI / 180;
+  const theta = (lon + 180) * Math.PI / 180;
+  const R = 3.02;
+  const m = mk(new THREE.SphereGeometry(sz, 10, 10), pbr(col, 0.9, 0.0));
+  m.position.set(
+    -R * Math.sin(phi) * Math.cos(theta),
+    R * Math.cos(phi),
+    R * Math.sin(phi) * Math.sin(theta)
+  );
+  globeG.add(m);
+}
+// Africa
+[[7,20,0.95],[0,28,0.8],[-12,25,0.85],[-25,28,0.8],[15,35,0.65],[2,38,0.55],[-5,15,0.7],[20,15,0.7],[-32,26,0.6]].forEach(([a,b,s])=>landPatch(a,b,s));
+// Europe
+[[48,8,0.55],[52,18,0.5],[40,2,0.45],[56,22,0.48],[58,10,0.45]].forEach(([a,b,s])=>landPatch(a,b,s,0x224a22));
+// Asia
+[[35,85,0.85],[45,105,0.9],[25,105,0.75],[60,90,0.75],[20,78,0.7]].forEach(([a,b,s])=>landPatch(a,b,s,0x1e421e));
+// Americas
+[[40,-100,0.9],[20,-90,0.75],[-10,-55,0.85],[55,-105,0.85],[-30,-65,0.7]].forEach(([a,b,s])=>landPatch(a,b,s,0x1e4820));
+
+// Mozambique — orange pulse beacon
+const phi0 = (90 + 18) * Math.PI / 180, th0 = (35 + 180) * Math.PI / 180, R0 = 3.03;
+const mzMat = pbr(0xFF6B00, 0.35, 0.1, 0xFF4400, 0.7);
+const mzDot = mk(new THREE.SphereGeometry(0.2, 14, 14), mzMat);
+mzDot.position.set(-R0 * Math.sin(phi0) * Math.cos(th0), R0 * Math.cos(phi0), R0 * Math.sin(phi0) * Math.sin(th0));
+globeG.add(mzDot);
+
+// Atmosphere layers — lighter, more visible in bright scene
+const atmo1 = mk(new THREE.SphereGeometry(3.15, 36, 36),
+  new THREE.MeshStandardMaterial({ color: 0x88BBDD, roughness: 0, metalness: 0, transparent: true, opacity: 0.07, side: THREE.BackSide }));
+globeG.add(atmo1);
+const atmo2 = mk(new THREE.SphereGeometry(3.28, 36, 36),
+  new THREE.MeshStandardMaterial({ color: 0xFF9944, roughness: 0, metalness: 0, transparent: true, opacity: 0.018, side: THREE.BackSide,
+    emissive: new THREE.Color(0xFF6B00), emissiveIntensity: 0.04 }));
+globeG.add(atmo2);
+
+// Energy ring — orange accent, reduced emissive
+const eqRing = mk(new THREE.TorusGeometry(3.18, 0.028, 8, 90),
+  pbr(0xFF6B00, 0.2, 0.4, 0xFF5500, 0.3));
+eqRing.rotation.x = Math.PI / 2;
+globeG.add(eqRing);
+
+// Latitude ring — brushed metal, warm silver
+const latRing = mk(new THREE.TorusGeometry(3.4, 0.015, 6, 80),
+  pbr(0xBBBBAA, 0.3, 0.8));
+latRing.rotation.x = Math.PI / 3;
+globeG.add(latRing);
+
+// ─────────────────────────────────────────────────────
+// SOLAR PANEL — realistic PBR, themes scene
+// ─────────────────────────────────────────────────────
+const solarG = new THREE.Group();
+scene.add(solarG);
+
+// Frame — brushed aluminium
+const frameMat = pbr(0x888899, 0.25, 0.88);
+const panelFrame = mk(new THREE.BoxGeometry(4.2, 2.6, 0.1), frameMat);
+panelFrame.castShadow = true;
+solarG.add(panelFrame);
+
+// Glass panel — frosted blue, lighter in bright env
+const glassMat = new THREE.MeshStandardMaterial({
+  color: 0x2244668, roughness: 0.04, metalness: 0.08,
+  transparent: true, opacity: 0.80,
+  emissive: new THREE.Color(0x0a1828), emissiveIntensity: 0.08
+});
+const panelGlass = mk(new THREE.BoxGeometry(3.9, 2.3, 0.06), glassMat);
+panelGlass.position.z = 0.04;
+solarG.add(panelGlass);
+
+// Cell grid — 3x5
+for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) {
+  const cellMat = pbr(0x0d1e35, 0.05, 0.1, 0x1a3a55, 0.15);
+  const cell = mk(new THREE.BoxGeometry(0.7, 0.68, 0.04), cellMat);
+  cell.position.set(-1.4 + c * 0.76, -0.7 + r * 0.72, 0.06);
+  solarG.add(cell);
+  // reflection line on each cell
+  const ref = mk(new THREE.BoxGeometry(0.55, 0.03, 0.02), pbr(0x6699bb, 0.02, 0.9, 0x4488aa, 0.4));
+  ref.position.set(-1.4 + c * 0.76, -0.4 + r * 0.72, 0.09);
+  solarG.add(ref);
+}
+// Pole
+const pole = mk(new THREE.CylinderGeometry(0.05, 0.07, 2.8, 12), pbr(0x666677, 0.4, 0.85));
+pole.position.set(0, -2.4, 0);
+solarG.add(pole);
+const base = mk(new THREE.CylinderGeometry(0.55, 0.65, 0.18, 24), pbr(0x555566, 0.5, 0.8));
+base.position.set(0, -3.85, 0); solarG.add(base);
+
+solarG.position.set(3.5, 0.5, 0);
+solarG.rotation.x = -0.18;
+solarG.visible = false;
+
+// ─────────────────────────────────────────────────────
+// WIND TURBINE — realistic, slow blade rotation
+// ─────────────────────────────────────────────────────
+const turbG = new THREE.Group();
+scene.add(turbG);
+
+const towerMat = pbr(0xCCCCCC, 0.35, 0.7);
+const tower = mk(new THREE.CylinderGeometry(0.09, 0.18, 5.5, 16), towerMat);
+tower.position.y = -0.2; turbG.add(tower);
+
+const nacelle = mk(new THREE.BoxGeometry(0.65, 0.38, 0.45), pbr(0xDDDDDD, 0.3, 0.7));
+nacelle.position.y = 2.65; turbG.add(nacelle);
+
+const hub = mk(new THREE.SphereGeometry(0.16, 14, 14), pbr(0xBBBBBB, 0.2, 0.8));
+hub.position.set(0, 2.65, 0.24); turbG.add(hub);
+
+const bladesHub = new THREE.Group();
+bladesHub.position.set(0, 2.65, 0.24);
+turbG.add(bladesHub);
+turbG.userData.blades = bladesHub;
+for (let i = 0; i < 3; i++) {
+  const blade = new THREE.Group();
+  // Tapered blade
+  const bMat = pbr(0xEEEEEE, 0.28, 0.4);
+  const bGeo = new THREE.BoxGeometry(0.1, 1.9, 0.05);
+  bGeo.translate(0, 0.95, 0);
+  const bm = mk(bGeo, bMat);
+  blade.add(bm);
+  // Tip orange accent
+  const tip = mk(new THREE.BoxGeometry(0.06, 0.2, 0.05), pbr(0xFF6B00, 0.2, 0.3, 0xFF5500, 0.25));
+  tip.position.y = 1.95; blade.add(tip);
+  blade.rotation.z = (i * Math.PI * 2) / 3;
+  bladesHub.add(blade);
+}
+// base of turbine
+const tbase = mk(new THREE.CylinderGeometry(0.5, 0.6, 0.2, 24), pbr(0x888888, 0.5, 0.6));
+tbase.position.y = -2.9; turbG.add(tbase);
+
+turbG.position.set(3.5, 0.5, 0);
+turbG.visible = false;
+
+// ─────────────────────────────────────────────────────
+// WATER SURFACE — methodology / results
+// ─────────────────────────────────────────────────────
+const waterG = new THREE.Group();
+scene.add(waterG);
+
+const waterMat = new THREE.MeshStandardMaterial({
+  color: 0x2255884, roughness: 0.04, metalness: 0.12,
+  transparent: true, opacity: 0.78,
+  emissive: new THREE.Color(0x112233), emissiveIntensity: 0.06
+});
+const waterBase = mk(new THREE.PlaneGeometry(9, 6, 32, 32), waterMat);
+waterBase.rotation.x = -Math.PI / 2;
+waterG.add(waterBase);
+waterG.userData.waterMesh = waterBase;
+
+// Caustic rings on water
+for (let i = 0; i < 5; i++) {
+  const cr = mk(new THREE.TorusGeometry(0.3 + i * 0.4, 0.015, 6, 40),
+    new THREE.MeshStandardMaterial({ color: 0xFF8833, transparent: true, opacity: 0.07 - i * 0.01,
+      emissive: new THREE.Color(0xFF4400), emissiveIntensity: 0.3 }));
+  cr.rotation.x = -Math.PI / 2;
+  cr.position.set((Math.random() - 0.5) * 4, 0.02, (Math.random() - 0.5) * 3);
+  cr.userData.pulse = i;
+  waterG.add(cr);
+}
+
+waterG.position.set(3.5, -1.5, 0);
+waterG.visible = false;
+
+// ─────────────────────────────────────────────────────
+// BUDGET: 3D bar chart — brushed metal columns
+// ─────────────────────────────────────────────────────
+const chartG = new THREE.Group();
+scene.add(chartG);
+
+const chartData = [
+  { h: 3.7, col: 0xFF6B00, label: '37%' },
+  { h: 2.3, col: 0xFF8833, label: '23%' },
+  { h: 1.7, col: 0xFFAA44, label: '17%' },
+  { h: 1.2, col: 0xFF5500, label: '12%' },
+  { h: 0.6, col: 0xFF7700, label: '6%' },
+  { h: 0.5, col: 0xFFCC44, label: '5%' },
+];
+chartData.forEach((d, i) => {
+  const bm = pbr(d.col, 0.12, 0.88, d.col, 0.1);
+  const bar = mk(new THREE.BoxGeometry(0.42, d.h, 0.42), bm);
+  bar.position.set(-1.9 + i * 0.8, d.h / 2 - 5.5, 0);
+  bar.castShadow = true; bar.receiveShadow = true;
+  chartG.add(bar);
+  // top cap — orange accent, subtle in bright env
+  const cap = mk(new THREE.BoxGeometry(0.43, 0.04, 0.43),
+    new THREE.MeshStandardMaterial({ color: d.col, emissive: new THREE.Color(d.col), emissiveIntensity: 0.25 }));
+  cap.position.copy(bar.position);
+  cap.position.y += d.h / 2;
+  chartG.add(cap);
+});
+// Base plate — warm light
+const plate = mk(new THREE.BoxGeometry(5.6, 0.06, 1.2), pbr(0xEEE0CC, 0.7, 0.2));
+plate.position.set(-0.1, -5.47, 0);
+chartG.add(plate);
+
+chartG.position.set(4.5, 0, 0);
+chartG.visible = false;
+
+// ─────────────────────────────────────────────────────
+// LEAF — natural curved surface (metas / results)
+// ─────────────────────────────────────────────────────
+const leafG = new THREE.Group();
+scene.add(leafG);
+
+function buildLeaf(scale, col, offset) {
+  const g = new THREE.Group();
+  // Curved leaf body
+  const leafGeo = new THREE.SphereGeometry(1, 20, 16);
+  leafGeo.scale(1, 2.2, 0.22);
+  const leafMesh = mk(leafGeo, pbr(col, 0.65, 0.0, col, 0.06));
+  g.add(leafMesh);
+  // Midrib
+  const midrib = mk(new THREE.CylinderGeometry(0.02, 0.03, 1.9, 8),
+    pbr(0x1a3a1a, 0.7, 0.0));
+  g.add(midrib);
+  // Stem
+  const stem = mk(new THREE.CylinderGeometry(0.025, 0.025, 0.8, 8), pbr(0x5a3a1a, 0.8, 0.0));
+  stem.position.y = -1.35; g.add(stem);
+  g.scale.setScalar(scale);
+  g.position.copy(offset);
+  leafG.add(g);
+  return g;
+}
+buildLeaf(1.1, 0x2a6a1a, new THREE.Vector3(0, 0, 0));
+buildLeaf(0.7, 0x3a7a2a, new THREE.Vector3(1.4, -0.5, 0.3));
+buildLeaf(0.6, 0x226018, new THREE.Vector3(-1.2, -0.8, -0.2));
+
+leafG.position.set(3.5, 0.5, 0);
+leafG.visible = false;
+
+// ─────────────────────────────────────────────────────
+// ENERGY FLOW PARTICLES — ambient, slow
+// ─────────────────────────────────────────────────────
+const flowN = 160;
+const flowGeo = new THREE.BufferGeometry();
+const flowPos = new Float32Array(flowN * 3);
+const flowVel = [];
+for (let i = 0; i < flowN; i++) {
+  flowPos[i * 3] = rnd(-12, 12);
+  flowPos[i * 3 + 1] = rnd(-4, 5);
+  flowPos[i * 3 + 2] = rnd(-8, 4);
+  const spd = 0.003 + Math.random() * 0.006;
+  flowVel.push({ x: rnd(-0.002, 0.002), y: spd, z: rnd(-0.002, 0.002) });
+}
+flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPos, 3));
+const flowPts = new THREE.Points(flowGeo,
+  new THREE.PointsMaterial({ color: 0xFF8833, size: 0.04, transparent: true, opacity: 0.18, depthWrite: false, sizeAttenuation: true }));
+scene.add(flowPts);
+
+// ─────────────────────────────────────────────────────
+// BACKGROUND — soft warm orbs (bokeh feel, light toned)
+// ─────────────────────────────────────────────────────
+[
+  [6, 2, -18, 3, 0.06], [-7, 1, -20, 2.5, 0.05],
+  [0, -3, -22, 4, 0.04], [10, -1, -16, 2, 0.07]
+].forEach(([x, y, z, r, op]) => {
+  const orb = mk(new THREE.SphereGeometry(r, 20, 20),
+    new THREE.MeshStandardMaterial({ color: 0xFFCC88, transparent: true, opacity: op,
+      emissive: new THREE.Color(0xFF9944), emissiveIntensity: 0.08, depthWrite: false }));
+  orb.position.set(x, y, z);
+  scene.add(orb);
+});
+
+// ─────────────────────────────────────────────────────
+// SLIDE DATA
+// ─────────────────────────────────────────────────────
+const SLIDES = [
+  {
+    eyebrow: '', title: 'EDU\nGALP',
+    sub: 'Formação para o Futuro — educação para a sustentabilidade nas escolas de Moçambique.',
+    cta: 'Começar Jornada',
+    content: null,
+    obj: { globe: true },
+    cam: { p: [0, 0.8, 14], l: [0, 0, 0], f: 44 },
+  },
+  {
+    eyebrow: 'CONTEXTUALIZAÇÃO', title: 'O FUTURO\nCOMEÇA HOJE',
+    sub: 'O EduGalp leva a sustentabilidade às salas de aula, criando consciência ambiental prática.',
+    cta: 'Objetivos',
+    content: `<div class="data-block" id="dr"><div class="stat-row">
+      <div class="stat-pill"><div class="sn" data-target="4">0</div><div class="sl">Escolas</div></div>
+      <div class="stat-pill"><div class="sn" data-target="480">0</div><div class="sl">Estudantes</div></div>
+      <div class="stat-pill"><div class="sn" data-target="5">0</div><div class="sl">Fases</div></div>
+    </div></div>`,
+    obj: { globe: true, zoom: true },
+    cam: { p: [1.5, 0.4, 10.5], l: [3.8, 0, 0], f: 36 },
+  },
+  {
+    eyebrow: 'OBJETIVOS', title: '4 TEMAS DE\nSUSTENTABILIDADE',
+    sub: '',
+    cta: 'Metodologia',
+    content: `<div class="data-block" id="dr"><div class="theme-grid">
+      <div class="theme-item"><div class="ti-n">01</div><div class="ti-t">Gestão de Resíduos</div></div>
+      <div class="theme-item"><div class="ti-n">02</div><div class="ti-t">Carvão vs Gás</div></div>
+      <div class="theme-item"><div class="ti-n">03</div><div class="ti-t">Energias Renováveis</div></div>
+      <div class="theme-item"><div class="ti-n">04</div><div class="ti-t">Consumo de Água</div></div>
+    </div></div>`,
+    obj: { solar: true },
+    cam: { p: [0, 1, 12], l: [3.5, 0.5, 0], f: 42 },
+  },
+  {
+    eyebrow: 'METODOLOGIA', title: 'JORNADA EM\n5 FASES',
+    sub: '',
+    cta: 'Metas',
+    content: `<div class="data-block" id="dr"><div class="phase-list">
+      <div class="phase-item"><div class="pi-n">01</div><div class="pi-t">Desenvolvimento da Aplicação EduGalp</div></div>
+      <div class="phase-item"><div class="pi-n">02</div><div class="pi-t">Preparação de Conteúdos Educativos</div></div>
+      <div class="phase-item"><div class="pi-n">03</div><div class="pi-t">Sessões de Workshop nas Escolas</div></div>
+      <div class="phase-item"><div class="pi-n">04</div><div class="pi-t">Quizzes e Avaliação via App</div></div>
+      <div class="phase-item"><div class="pi-n">05</div><div class="pi-t">Certificados Digitais para Concluintes</div></div>
+    </div></div>`,
+    obj: { turbine: true },
+    cam: { p: [-0.5, 0.8, 12], l: [3.5, 0.5, 0], f: 42 },
+  },
+  {
+    eyebrow: 'METAS', title: 'ALCANCE DO\nPROGRAMA',
+    sub: 'Impacto concreto e mensurável nas comunidades escolares de Moçambique.',
+    cta: 'Resultados',
+    content: `<div class="data-block" id="dr"><div class="stat-row">
+      <div class="stat-pill"><div class="sn" data-target="4">0</div><div class="sl">Escolas</div></div>
+      <div class="stat-pill"><div class="sn" data-target="472">0</div><div class="sl">Estudantes</div></div>
+      <div class="stat-pill"><div class="sn" data-target="2">0</div><div class="sl">Sessões</div></div>
+      <div class="stat-pill"><div class="sn" data-target="109">0</div><div class="sl">Alunos/Sessão</div></div>
+    </div></div>`,
+    obj: { leaf: true },
+    cam: { p: [0.5, 1.2, 12], l: [3.5, 0.5, 0], f: 40 },
+  },
+  {
+    eyebrow: 'RESULTADOS ESPERADOS', title: 'O IMPACTO\nCRIADO',
+    sub: '',
+    cta: 'Orçamento',
+    content: `<div class="data-block" id="dr"><div class="result-list">
+      <div class="result-item"><div class="ri-t">Futuros Colaboradores Galp</div><div class="ri-d">Jovens formados em sustentabilidade, prontos para integrar a Galp com visão consciente.</div></div>
+      <div class="result-item"><div class="ri-t">Comunidade Escolar Consciente</div><div class="ri-d">Efeito multiplicador de práticas sustentáveis nas famílias e comunidades.</div></div>
+      <div class="result-item"><div class="ri-t">Posicionamento de Mercado</div><div class="ri-d">Galp consolidada como líder em sustentabilidade juvenil em Moçambique.</div></div>
+    </div></div>`,
+    obj: { water: true },
+    cam: { p: [-0.5, 0.5, 12], l: [3.5, -0.5, 0], f: 42 },
+  },
+  {
+    eyebrow: 'ORÇAMENTO ANUAL', title: 'INVESTIMENTO',
+    sub: '',
+    cta: 'Recomeçar',
+    content: `<div class="data-block" id="dr"><div class="budget-wrap">
+      <div class="b-total">€ 4.200</div>
+      <div class="b-sub">336.000 MZN / ANO</div>
+      <div class="b-row"><span class="b-name">Coffee Break</span><div class="b-track"><div class="b-fill" data-w="37"></div></div><span class="b-val">€1.550</span></div>
+      <div class="b-row"><span class="b-name">Equipamento</span><div class="b-track"><div class="b-fill" data-w="23"></div></div><span class="b-val">€950</span></div>
+      <div class="b-row"><span class="b-name">Dev. App</span><div class="b-track"><div class="b-fill" data-w="17"></div></div><span class="b-val">€700</span></div>
+      <div class="b-row"><span class="b-name">Premiação</span><div class="b-track"><div class="b-fill" data-w="12"></div></div><span class="b-val">€500</span></div>
+      <div class="b-row"><span class="b-name">Deslocação</span><div class="b-track"><div class="b-fill" data-w="6"></div></div><span class="b-val">€250</span></div>
+      <div class="b-row"><span class="b-name">Marketing</span><div class="b-track"><div class="b-fill" data-w="5"></div></div><span class="b-val">€200</span></div>
+    </div></div>`,
+    obj: { chart: true },
+    cam: { p: [-0.8, 1, 11.5], l: [4.5, -1.5, 0], f: 44 },
+  },
+];
+
+// ─────────────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────────────
+let cur = 0, busy = false;
+const cntTs = [];
+
+const dw = document.getElementById('dw');
+SLIDES.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'ndot' + (i === 0 ? ' on' : '');
+  d.onclick = () => go(i - cur);
+  dw.appendChild(d);
+});
+
+function stopCnt() { cntTs.forEach(clearInterval); cntTs.length = 0; }
+function startCnt() {
+  document.querySelectorAll('[data-target]').forEach(el => {
+    const tgt = +el.getAttribute('data-target');
+    let v = 0; const inc = tgt / 52;
+    const t = setInterval(() => { v = Math.min(v + inc, tgt); el.textContent = Math.round(v); if (v >= tgt) clearInterval(t); }, 1100 / 52);
+    cntTs.push(t);
+  });
+}
+
+const allObjs = { globe: globeG, solar: solarG, turbine: turbG, water: waterG, leaf: leafG, chart: chartG };
+
+let flyUsed = false;
+
+function go(delta) {
+  const next = cur + delta;
+  if (next < 0 || next >= SLIDES.length || busy) return;
+  busy = true;
+
+  const fromCover = cur === 0 && next === 1 && !flyUsed;
+  const fade = document.getElementById('fade');
+
+  const doSwap = () => {
+    cur = next;
+    const s = SLIDES[cur];
+
+    // 3D objects
+    Object.keys(allObjs).forEach(k => { allObjs[k].visible = !!s.obj[k]; });
+
+    // Camera
+    cam.dp.set(...s.cam.p);
+    cam.dl.set(...s.cam.l);
+    cam.df = s.cam.f;
+
+    // UI
+    const eb = document.getElementById('eyebrow');
+    const ti = document.getElementById('title');
+    const su = document.getElementById('subtitle');
+    const slot = document.getElementById('content-slot');
+
+    eb.classList.remove('in'); ti.classList.remove('in'); su.classList.remove('in');
+    eb.textContent = s.eyebrow;
+    ti.innerHTML = s.title.replace('\n', '<br>');
+    su.textContent = s.sub;
+    slot.innerHTML = s.content || '';
+
+    stopCnt();
+    document.querySelectorAll('.b-fill').forEach(b => b.style.width = '0%');
+
+    setTimeout(() => {
+      eb.classList.add('in'); ti.classList.add('in'); su.classList.add('in');
+      const dr = document.getElementById('dr');
+      if (dr) { setTimeout(() => dr.classList.add('in'), 100); }
+      startCnt();
+      if (s.content && s.content.includes('b-fill')) {
+        setTimeout(() => document.querySelectorAll('.b-fill').forEach(b => b.style.width = b.dataset.w + '%'), 450);
+      }
+    }, 60);
+
+    document.getElementById('pfill').style.width = ((cur + 1) / SLIDES.length * 100) + '%';
+    document.querySelectorAll('.ndot').forEach((d, i) => d.classList.toggle('on', i === cur));
+    document.getElementById('pb').disabled = cur === 0;
+    document.getElementById('nb').disabled = cur === SLIDES.length - 1;
+    document.getElementById('cta-txt').textContent = s.cta;
+    document.getElementById('cta-btn').onclick = () => go(cur === SLIDES.length - 1 ? -(SLIDES.length - 1) : 1);
+  };
+
+  if (fromCover) {
+    flyUsed = true;
+    // Cinematic zoom into globe
+    cam.dp.set(2.8, 0.2, 7.5);
+    cam.dl.set(3.8, 0, 0);
+    cam.df = 26;
+    setTimeout(() => {
+      fade.style.transition = 'opacity .5s ease';
+      fade.style.opacity = '0.98';
+      setTimeout(() => {
+        doSwap();
+        fade.style.transition = 'opacity .75s ease';
+        fade.style.opacity = '0';
+        setTimeout(() => { busy = false; }, 800);
+      }, 520);
+    }, 1300);
+  } else {
+    fade.style.transition = 'opacity .5s ease';
+    fade.style.opacity = '0.92';
+    setTimeout(() => {
+      doSwap();
+      fade.style.transition = 'opacity .6s ease';
+      fade.style.opacity = '0';
+      setTimeout(() => { busy = false; }, 650);
+    }, 520);
+  }
+}
+
+document.getElementById('cta-btn').onclick = () => go(1);
+
+// ─────────────────────────────────────────────────────
+// RENDER LOOP
+// ─────────────────────────────────────────────────────
+const clock = new THREE.Clock();
+let gt = 0;
+
+// Init UI
+const s0 = SLIDES[0];
+document.getElementById('eyebrow').textContent = s0.eyebrow;
+document.getElementById('title').innerHTML = s0.title.replace('\n', '<br>');
+document.getElementById('subtitle').textContent = s0.sub;
+document.getElementById('content-slot').innerHTML = s0.content || '';
+setTimeout(() => {
+  document.getElementById('eyebrow').classList.add('in');
+  document.getElementById('title').classList.add('in');
+  document.getElementById('subtitle').classList.add('in');
+}, 300);
+Object.keys(allObjs).forEach(k => { allObjs[k].visible = !!s0.obj[k]; });
+cam.dp.set(...s0.cam.p); cam.dl.set(...s0.cam.l); cam.df = s0.cam.f;
+cam.pos.copy(cam.dp); cam.look.copy(cam.dl); cam.fov = cam.df;
+
+function render() {
+  requestAnimationFrame(render);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  gt += dt;
+
+  // Camera — film-camera spring (gentle 0.026)
+  lv(cam.pos, cam.dp, 0.026);
+  lv(cam.look, cam.dl, 0.026);
+  cam.fov = lerp(cam.fov, cam.df, 0.026);
+  camera.position.copy(cam.pos);
+  camera.fov = cam.fov;
+  camera.updateProjectionMatrix();
+  camera.lookAt(cam.look);
+
+  // Globe
+  if (globeG.visible) {
+    globeG.rotation.y += 0.0012;
+    eqRing.rotation.z += 0.003;
+    latRing.rotation.y += 0.004;
+    mzDot.material.emissiveIntensity = 0.35 + Math.sin(gt * 2.8) * 0.15;
+    atmo2.material.emissiveIntensity = 0.025 + Math.sin(gt * 0.8) * 0.01;
+  }
+
+  // Solar panel — subtle tracking tilt
+  if (solarG.visible) {
+    solarG.rotation.y = Math.sin(gt * 0.2) * 0.05;
+    glassMat.emissiveIntensity = 0.06 + Math.sin(gt * 1.5) * 0.02;
+  }
+
+  // Turbine — slow blade rotation
+  if (turbG.visible && turbG.userData.blades) {
+    turbG.userData.blades.rotation.z += 0.018;
+    turbG.rotation.y = Math.sin(gt * 0.15) * 0.04;
+  }
+
+  // Water — vertex displacement
+  if (waterG.visible) {
+    const wPos = waterG.userData.waterMesh.geometry.attributes.position;
+    for (let i = 0; i < wPos.count; i++) {
+      const x = wPos.getX(i), z = wPos.getZ(i);
+      wPos.setY(i, Math.sin(x * 0.8 + gt * 1.2) * 0.06 + Math.cos(z * 0.9 + gt * 0.8) * 0.04);
+    }
+    wPos.needsUpdate = true;
+    // Caustic ring pulse
+    waterG.children.forEach((c, i) => {
+      if (c.userData.pulse !== undefined) {
+        c.material.opacity = 0.04 + Math.sin(gt * 1.5 + c.userData.pulse * 0.8) * 0.03;
+        c.scale.setScalar(1 + Math.sin(gt * 0.8 + c.userData.pulse) * 0.06);
+      }
+    });
+  }
+
+  // Leaf — gentle sway
+  if (leafG.visible) {
+    leafG.rotation.z = Math.sin(gt * 0.4) * 0.03;
+    leafG.rotation.x = Math.sin(gt * 0.3) * 0.02;
+  }
+
+  // Chart — breathing
+  if (chartG.visible) {
+    chartG.children.forEach((c, i) => {
+      if (c.geometry && c.geometry.type === 'BoxGeometry' && i < 6) {
+        c.scale.y = 1 + Math.sin(gt * 0.5 + i * 0.6) * 0.012;
+      }
+    });
+  }
+
+  // Energy flow particles
+  const fp = flowGeo.attributes.position.array;
+  for (let i = 0; i < flowN; i++) {
+    fp[i * 3] += flowVel[i].x;
+    fp[i * 3 + 1] += flowVel[i].y;
+    fp[i * 3 + 2] += flowVel[i].z;
+    if (fp[i * 3 + 1] > 6) { fp[i * 3 + 1] = -4; fp[i * 3] = rnd(-12, 12); fp[i * 3 + 2] = rnd(-8, 4); }
+    if (Math.abs(fp[i * 3]) > 14) flowVel[i].x *= -1;
+  }
+  flowGeo.attributes.position.needsUpdate = true;
+
+  // Dynamic lights — gentle warm variation (not pulsing aggressively)
+  rim.intensity = 1.6 + Math.sin(gt * 0.6) * 0.25;
+  rim.position.x = -10 + Math.sin(gt * 0.18) * 2;
+  fill.intensity = 1.1 + Math.sin(gt * 0.45) * 0.15;
+  bounce.intensity = 0.5 + Math.sin(gt * 0.9) * 0.08;
+
+  // Grid drift
+  grid.position.z = (gt * 0.12) % 1.5;
+
+  renderer.render(scene, camera);
+}
+render();
+
+// Keyboard + touch
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
+});
+let tx0 = 0;
+document.addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; });
+document.addEventListener('touchend', e => { const dx = tx0 - e.changedTouches[0].clientX; if (Math.abs(dx) > 60) go(dx > 0 ? 1 : -1); });
+
+window.addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+});
+</script>
+</body>
+</html>
